@@ -1,5 +1,6 @@
 import numpy as np 
-from linearmodel.regression import Regression 
+from regression import *
+from scipy import linalg
 
 class LinearRegression(Regression):
 	"""
@@ -10,7 +11,7 @@ class LinearRegression(Regression):
 	p ~	N(p|X @ W, Var)
 	"""
 
-	def fit(self, X : np.ndarray, p: np.ndarray):
+	def fit(self, xArr : np.ndarray, yArr: np.ndarray):
 		"""
 		Linear Regression Algorithm: Least Squares Methods:
 			W = [(X^T @ X)^(-1) @ X^T](Moore–Penrose inverse) @ p
@@ -18,14 +19,20 @@ class LinearRegression(Regression):
 		Input:
 		------
 		 N: number of examples, D, dimension of the regressor
-		1: X (N, D), np.ndarray, independent variable for training
-		2. p (N,) np.ndarray, dependent variable for training
+		1: xArr (N, D), np.ndarray, independent variable for training
+		2. yArr (N, 1) np.ndarray, dependent variable for training
+		xTx: (D, D)
+		W:   (D, 1)
 		------
 		Output:
 		------
 		"""
-		self.W = np.linalg.pinv(X) @ p 
-		self.Var = np.mean(np.square(X @ self.W - p))
+		xMat = np.mat(xArr); yMat = np.mat(yArr).T
+		xTx = xMat.T * xMat
+		if linalg.det(xTx) == 0.0:
+			print("This matirx is singular, connot do inverse")
+		self.W = xTx.I * (xMat.T * yMat) 
+		self.Var = np.mean(np.square(xMat * self.W - yMat))
 
 	def predict(self, X : np.ndarray):
 		"""
@@ -43,6 +50,16 @@ class LinearRegression(Regression):
 		1. Predicted y using Linear Regression
 		2. Standard Deviation
 		"""
-		y = X @ self.W
+		y = X * self.W
 		std = np.sqrt(self.Var) + np.zeros_like(y)
 		return y, std
+
+
+
+lr = LinearRegression()
+X = np.array([[1, 1, 1], [1, 2, 1], [2, 2, 1], [2, 3, 1]])
+y = np.dot(X, np.array([1, 2, -1]))
+lr.fit(X, y)
+
+
+
